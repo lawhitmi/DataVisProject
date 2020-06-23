@@ -1,5 +1,4 @@
 ## Lucas Visualization ##
-dat <- read.csv("datasets_934_1711_astronauts.csv",na.strings=c(""," ","NA")) #replace blanks with 'NA'
 
 library(networkD3) # for sankeyNetwork call
 library(dplyr)
@@ -7,53 +6,11 @@ library(tidyr) #separate
 library(RColorBrewer)
 library(stringr) # str_extract
 
-### EXPLORE DATA ###
-checkNA <- function (x) {
-  return(sum(is.na(x)))
-}
-str(dat)
-checkNA(dat$Birth.Place) # no missing values in birthplace
-checkNA(dat$Year) # 27 missing alum years
-checkNA(dat$Alma.Mater) # 1 missing Alma Mater
-unique(dat$Alma.Mater) # 280 Universities 
-# Note that multiple universities can be listed for graduate/undergraduate. Recommend splitting this to reduce levels for each education level
-checkNA(dat$Graduate.Major) # 59 missing Graduate degrees
-unique(dat$Graduate.Major)
-checkNA(dat$Undergraduate.Major) # 22 missing undergraduate degrees
-checkNA(dat$Military.Rank) # 150 missing. Note that a NA probably means no military services
-
-# Look further at the Majors
-sort(table(dat$Undergraduate.Major),decreasing=TRUE)
-cumsum(sort(prop.table(table(dat$Undergraduate.Major)),decreasing=TRUE))
-par(las=2,mar=c(12,4,1,1))
-plot(sort(table(dat$Undergraduate.Major),decreasing=TRUE),cex.axis=0.75,main="Frequency of Undergraduate Majors (Sorted)")
-levels(dat$Undergraduate.Major) #83 unique values
-
-sort(table(dat$Graduate.Major),decreasing=TRUE)
-cumsum(sort(prop.table(table(dat$Graduate.Major)),decreasing=TRUE))
-par(las=2,mar=c(12,4,1,1))
-plot(sort(table(dat$Graduate.Major),decreasing=TRUE),cex.axis=0.75,main="Frequency of Graduate Majors (Sorted)")
-levels(dat$Graduate.Major) # 143 unique values
-
-# Alma Mater
-sort(table(dat$Alma.Mater),decreasing=TRUE)
-cumsum(sort(prop.table(table(dat$Alma.Mater)),decreasing=TRUE))
-par(las=2,mar=c(12,4,1,1))
-plot(sort(table(dat$Alma.Mater),decreasing=TRUE),cex.axis=0.75,main="Frequency of Alma Mater (Sorted)")
-levels(dat$Alma.Mater) # 280 unique values
-
-investigate <- dat %>% separate("Alma.Mater",c("AM1","AM2","AM3","AM4","AM5","AM6"),sep=";")
-sum(!is.na(investigate$AM3)) # 49 values in third spot
-sum(!is.na(investigate$AM4)) # 5 values in 4th spot
-sum(!is.na(investigate$AM5)) # 2 values in 5th spot
-sum(!is.na(investigate$AM6)) # 1 value in 6th spot
-
-# Military Branch
-levels(dat$Military.Branch)
-# Need to remove 'Reserves' and "(Retired)" as these aren't helpful to the sankey plot.
+#### LOAD DATA ####
+dat <- read.csv("datasets_934_1711_astronauts.csv",na.strings=c(""," ","NA")) #replace blanks with 'NA'
 
 
-### PREPROCESSING ###
+#### PREPROCESSING ####
 #Create a new column with two levels: USBorn or BornAbroad
 
 dat <- dat %>% separate("Birth.Place", c("Birth.City", "Birth.Province"),sep=",")
@@ -84,32 +41,183 @@ levels(dat$AM1)
 levels(dat$AM2)
 levels(dat$AM3)
 
+# Cleansing Undergrad Majors
+dat$Undergraduate.Major <- sapply(dat$Undergraduate.Major,as.character)
+dat$Undergraduate.Major[is.na(dat$Undergraduate.Major)] <- "NoUndergradDeg"
+
+unique(dat$Undergraduate.Major) #84
+
+nrow(dat[dat$Undergraduate.Major=="Physics",]) #35
+dat[grepl("Physics",dat$Undergraduate.Major),]$Undergraduate.Major <- "Physics"
+nrow(dat[dat$Undergraduate.Major=="Physics",]) #54
+
+nrow(dat[dat$Undergraduate.Major=="Aerospace Engineering",]) #33
+dat[grepl("Aerospace",dat$Undergraduate.Major),]$Undergraduate.Major <- "Aerospace"
+nrow(dat[dat$Undergraduate.Major=="Aerospace",]) #34
+
+nrow(dat[dat$Undergraduate.Major=="Mechanical Engineering",]) #30
+dat[grepl("Mechanic",dat$Undergraduate.Major),]$Undergraduate.Major <- "Mechanical Engineering"
+nrow(dat[dat$Undergraduate.Major=="Mechanical Engineering",]) #34
+
+nrow(dat[dat$Undergraduate.Major=="Aeronautical Engineering",]) #28
+dat[grepl("Aeronautic",dat$Undergraduate.Major),]$Undergraduate.Major <- "Aeronautics"
+nrow(dat[dat$Undergraduate.Major=="Aeronautics",]) #39
+
+nrow(dat[dat$Undergraduate.Major=="Electrical Engineering",]) #23
+dat[grepl("Electric",dat$Undergraduate.Major),]$Undergraduate.Major <- "Electrical Engineering"
+nrow(dat[dat$Undergraduate.Major=="Electrical Engineering",]) #26
+
+unique(dat$Undergraduate.Major) #64
+
+dat$Undergraduate.Major <- ifelse(dat$Undergraduate.Major %in% c("Physics","Aerospace","Mechanical Engineering","Aeronautics","Electrical Engineering","NoUndergradDeg"), dat$Undergraduate.Major, "Other")
+unique(dat$Undergraduate.Major) #7
+
+# Cleansing Graduate Majors
+dat$Graduate.Major <- sapply(dat$Graduate.Major,as.character)
+dat$Graduate.Major[is.na(dat$Graduate.Major)] <- "NoGraduateDeg"
+
+unique(dat$Graduate.Major) #144
+
+nrow(dat[dat$Graduate.Major=="Physics",]) #15
+dat[grepl("Physics",dat$Graduate.Major),]$Graduate.Major <- "Physics"
+nrow(dat[dat$Graduate.Major=="Physics",]) #29
+
+nrow(dat[dat$Graduate.Major=="Aerospace Engineering",]) #21
+dat[grepl("Aerospace",dat$Graduate.Major),]$Graduate.Major <- "Aerospace"
+nrow(dat[dat$Graduate.Major=="Aerospace",]) #35
+
+nrow(dat[dat$Graduate.Major=="Mechanical Engineering",]) #13
+dat[grepl("Mechanic",dat$Graduate.Major),]$Graduate.Major <- "Mechanical Engineering"
+nrow(dat[dat$Graduate.Major=="Mechanical Engineering",]) #27
+
+nrow(dat[dat$Graduate.Major=="Aeronautical Engineering",]) #27
+dat[grepl("Aeronautic",dat$Graduate.Major),]$Graduate.Major <- "Aeronautics"
+nrow(dat[dat$Graduate.Major=="Aeronautics",]) #58
+
+nrow(dat[dat$Graduate.Major=="Medicine",]) #16
+dat[grepl("Medicin",dat$Graduate.Major),]$Graduate.Major <- "Medicine"
+nrow(dat[dat$Graduate.Major=="Medicine",]) #29
+
+unique(dat$Graduate.Major) #79
+
+dat$Graduate.Major <- ifelse(dat$Graduate.Major %in% c("Physics","Aerospace","Mechanical Engineering","Aeronautics","Medicine","NoGraduateDeg"), dat$Graduate.Major, "Other")
+unique(dat$Graduate.Major) #7
+
 # Cleansing the Military Branch
 str_extract(dat$Military.Branch,"(\\s\\(.+\\))|(\\sReserves)")
 dat$Military.Branch <- gsub("(\\s\\(.+\\))|(\\sReserves)","",dat$Military.Branch)
 dat$Military.Branch <- gsub("Naval","Navy",dat$Military.Branch)
 dat$Military.Branch <- as.factor(dat$Military.Branch)
+dat$Military.Branch <- as.character((dat$Military.Branch))
+dat[is.na(dat$Military.Branch),]$Military.Branch <- "None"
+dat$Military.Branch <- as.factor(dat$Military.Branch)
 levels(dat$Military.Branch)
 str(dat$Military.Branch)
 
-##### Sankey Plot #####
+#### SANKEY PLOT ####
 
-# EXAMPLE SANKEY PLOT ####
-# Load energy projection data
+# # EXAMPLE SANKEY PLOT ####
+# # Load energy projection data
 # URL <- "https://cdn.rawgit.com/christophergandrud/networkD3/master/JSONdata/energy.json"
 # Energy <- jsonlite::fromJSON(URL)
 # 
-# # Now we have 2 data frames: a 'links' data frame with 3 columns (from, to, value), and a 'nodes' data frame that gives the name of each node.
+# # Now we have 2 data frames: a 'links' data frame with 3 columns (from, to, value), 
+# # and a 'nodes' data frame that gives the name of each node.
 # 
 # # Thus we can plot it
 # sankeyNetwork(Links = Energy$links, Nodes = Energy$nodes, Source = "source",
 #               Target = "target", Value = "value", NodeID = "name",
 #               units = "TWh", fontSize = 12, nodeWidth = 30)
 
-nodes <- c(levels(dat$USborn),levels(dat$Military.Branch),) # need to add nodes for majors, alma mater but these need to be paired down.
 
+# Generate Node Names df
+nodes <- data.frame(c(levels(dat$Gender), levels(dat$USborn), levels(dat$Military.Branch), unique(dat$Undergraduate.Major), unique(dat$Graduate.Major))) 
+names(nodes) <- c("nodes")
+nodes$index <- 1:nrow(nodes)
+nodes$concat <- paste0(nodes$index,",",nodes$nodes)
+# Generate Links df
+#links <- crossing(levels(dat$Gender),levels(dat$USborn))
 
-###### Conditional Density Plot ######
+# genValue <- function (x, y) {
+#   x_char <- as.character(x)
+#   y_char <- as.character(y)
+#   return(nrow(dat[dat$Gender==x_char & dat$USborn==y_char,]))
+# }
+# nrow(dat[dat$Gender==as.character(links[1,1]),]) # 50 females
+# dat[dat$Gender==as.character(links[1,1]),]
+# i<-4
+# genValue(links[i,1],links[i,2]) # c(2,48,21,286)
+
+# links$values <- c(2,48,21,286)
+# names(links) <- c('source','target','values')
+# links$source <- c(0,0,1,1) 
+# links$target <- c(2,3,2,3)
+end1 <- length(levels(dat$Gender))
+end2 <- end1+length(levels(dat$USborn))
+end3 <- end2+length(levels(dat$Military.Branch))
+end4 <- end3+length(unique(dat$Undergraduate.Major))
+end5 <- end4+length(unique(dat$Graduate.Major))
+level1 <- crossing(nodes[1:end1,"concat"], nodes[(end1+1):end2,"concat"])
+level2 <- crossing(nodes[(end1+1):end2,"concat"], nodes[(end2+1):end3,"concat"])
+level3 <- crossing(nodes[(end2+1):end3,"concat"], nodes[(end3+1):end4,"concat"])
+level4 <- crossing(nodes[(end3+1):end4,"concat"], nodes[(end4+1):end5,"concat"])
+level1$level <- 1
+level2$level <- 2
+level3$level <- 3
+level4$level <- 4
+# level1.index <-crossing(1:end1, (end1+1):end2)
+# level2.index <-crossing((end1+1):end2, (end2+1):end3)
+# level3.index <-crossing((end2+1):end3,(end3+1):end4)
+# level4.index <-crossing((end3+1):end4,(end4+1):end5)
+names(level1) <- c("sourcename","targetname","level")
+names(level2) <- c("sourcename","targetname","level")
+names(level3) <- c("sourcename","targetname","level")
+names(level4) <- c("sourcename","targetname","level")
+links <- rbind(level1,level2,level3,level4)
+links <- links %>% separate("targetname",c("target","targetname"),sep=",")
+links <- links %>% separate("sourcename",c("source", "sourcename"), sep=",")
+# names(level1.index) <- c("source","target")
+# names(level2.index) <- c("source","target")
+# names(level3.index) <- c("source","target")
+# names(level4.index) <- c("source","target")
+level1.calc <- function (x,y) {
+  return(nrow(dat[dat$Gender==x & dat$USborn==y,]))
+} 
+level2.calc <- function (x,y) {
+  return(nrow(dat[dat$USborn==x & dat$Military.Branch==y,]))
+}
+level3.calc <- function (x,y) {
+  return(nrow(dat[dat$Military.Branch==x & dat$Undergraduate.Major==y,]))
+}
+level4.calc <- function (x,y) {
+  return(nrow(dat[dat$Undergraduate.Major==x & dat$Graduate.Major==y,]))
+}
+valueCalc <- function (x,y,level) {
+  if (level==1) return(level1.calc(x,y))
+  if (level==2) return(level2.calc(x,y))
+  if (level==3) return(level3.calc(x,y))
+  if (level==4) return(level4.calc(x,y))
+}
+level.values <- c(1:nrow(links))
+for (i in 1:nrow(links)) {
+  level.values[i] <- valueCalc(links[i,]$sourcename,links[i,]$targetname,links[i,]$level)
+}
+
+# links.index <- rbind(level1.index,level2.index,level3.index,level4.index)
+# links <- cbind(links.index,links)
+links$values <- level.values
+links$source <- as.numeric(links$source) - 1 # must be zero indexed
+links$target <- as.numeric(links$target) -1 # must be zero indexed
+
+# Plot Sankey
+
+# Source and Target in links df must be integer indices in the nodes df 
+# The df must also be zero-indexed
+sankeyNetwork(Links = links, Nodes = nodes, Source = "source",
+            Target = "target",  NodeID = "nodes", Value = "values",
+            fontSize = 12, nodeWidth = 10)
+
+#### CONDITIONAL DENSITY PLOTS ####
 
 #Gender split of each Astronaut class
 cdplot(Gender~Year,data=dat,col=brewer.pal(3,"Set3"))
