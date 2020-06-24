@@ -135,23 +135,8 @@ nodes <- data.frame(c(levels(dat$Gender), levels(dat$USborn), levels(dat$Militar
 names(nodes) <- c("nodes")
 nodes$index <- 1:nrow(nodes)
 nodes$concat <- paste0(nodes$index,",",nodes$nodes)
-# Generate Links df
-#links <- crossing(levels(dat$Gender),levels(dat$USborn))
 
-# genValue <- function (x, y) {
-#   x_char <- as.character(x)
-#   y_char <- as.character(y)
-#   return(nrow(dat[dat$Gender==x_char & dat$USborn==y_char,]))
-# }
-# nrow(dat[dat$Gender==as.character(links[1,1]),]) # 50 females
-# dat[dat$Gender==as.character(links[1,1]),]
-# i<-4
-# genValue(links[i,1],links[i,2]) # c(2,48,21,286)
-
-# links$values <- c(2,48,21,286)
-# names(links) <- c('source','target','values')
-# links$source <- c(0,0,1,1) 
-# links$target <- c(2,3,2,3)
+# Generate Link df
 end1 <- length(levels(dat$Gender))
 end2 <- end1+length(levels(dat$USborn))
 end3 <- end2+length(levels(dat$Military.Branch))
@@ -165,21 +150,17 @@ level1$level <- 1
 level2$level <- 2
 level3$level <- 3
 level4$level <- 4
-# level1.index <-crossing(1:end1, (end1+1):end2)
-# level2.index <-crossing((end1+1):end2, (end2+1):end3)
-# level3.index <-crossing((end2+1):end3,(end3+1):end4)
-# level4.index <-crossing((end3+1):end4,(end4+1):end5)
+
 names(level1) <- c("sourcename","targetname","level")
 names(level2) <- c("sourcename","targetname","level")
 names(level3) <- c("sourcename","targetname","level")
 names(level4) <- c("sourcename","targetname","level")
+
 links <- rbind(level1,level2,level3,level4)
 links <- links %>% separate("targetname",c("target","targetname"),sep=",")
 links <- links %>% separate("sourcename",c("source", "sourcename"), sep=",")
-# names(level1.index) <- c("source","target")
-# names(level2.index) <- c("source","target")
-# names(level3.index) <- c("source","target")
-# names(level4.index) <- c("source","target")
+
+# Calculate values
 level1.calc <- function (x,y) {
   return(nrow(dat[dat$Gender==x & dat$USborn==y,]))
 } 
@@ -203,11 +184,9 @@ for (i in 1:nrow(links)) {
   level.values[i] <- valueCalc(links[i,]$sourcename,links[i,]$targetname,links[i,]$level)
 }
 
-# links.index <- rbind(level1.index,level2.index,level3.index,level4.index)
-# links <- cbind(links.index,links)
 links$values <- level.values
 links$source <- as.numeric(links$source) - 1 # must be zero indexed
-links$target <- as.numeric(links$target) -1 # must be zero indexed
+links$target <- as.numeric(links$target) - 1 # must be zero indexed
 
 # Plot Sankey
 
