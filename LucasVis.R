@@ -2,6 +2,7 @@
 
 library(networkD3) # for sankeyNetwork call
 library(dplyr)
+library(htmltools)
 library(tidyr) #separate
 library(RColorBrewer)
 library(stringr) # str_extract
@@ -114,22 +115,28 @@ dat$Military.Branch <- as.factor(dat$Military.Branch)
 levels(dat$Military.Branch)
 str(dat$Military.Branch)
 
+
+# EXAMPLE SANKEY PLOT ####
+# Load energy projection data
+URL <- "https://cdn.rawgit.com/christophergandrud/networkD3/master/JSONdata/energy.json"
+Energy <- jsonlite::fromJSON(URL)
+
+# Now we have 2 data frames: a 'links' data frame with 3 columns (from, to, value),
+# and a 'nodes' data frame that gives the name of each node.
+
+# Thus we can plot it
+sankeyNetwork(Links = Energy$links, Nodes = Energy$nodes, Source = "source",
+              Target = "target", Value = "value", NodeID = "name",
+              units = "TWh", fontSize = 12, nodeWidth = 30)
+# Colour links
+Energy$links$energy_type <- sub(' .*', '',
+                                Energy$nodes[Energy$links$source + 1, 'name'])
+
+sankeyNetwork(Links = Energy$links, Nodes = Energy$nodes, Source = 'source',
+              Target = 'target', Value = 'value', NodeID = 'name',
+              LinkGroup = 'energy_type', NodeGroup = NULL)
+
 #### SANKEY PLOT ####
-
-# # EXAMPLE SANKEY PLOT ####
-# # Load energy projection data
-# URL <- "https://cdn.rawgit.com/christophergandrud/networkD3/master/JSONdata/energy.json"
-# Energy <- jsonlite::fromJSON(URL)
-# 
-# # Now we have 2 data frames: a 'links' data frame with 3 columns (from, to, value), 
-# # and a 'nodes' data frame that gives the name of each node.
-# 
-# # Thus we can plot it
-# sankeyNetwork(Links = Energy$links, Nodes = Energy$nodes, Source = "source",
-#               Target = "target", Value = "value", NodeID = "name",
-#               units = "TWh", fontSize = 12, nodeWidth = 30)
-
-
 # Generate Node Names df
 nodes <- data.frame(c(levels(dat$Gender), levels(dat$USborn), levels(dat$Military.Branch), unique(dat$Undergraduate.Major), unique(dat$Graduate.Major))) 
 names(nodes) <- c("nodes")
@@ -194,7 +201,21 @@ links$target <- as.numeric(links$target) - 1 # must be zero indexed
 # The df must also be zero-indexed
 sankeyNetwork(Links = links, Nodes = nodes, Source = "source",
             Target = "target",  NodeID = "nodes", Value = "values",
-            fontSize = 12, nodeWidth = 10)
+            fontSize = 12, nodeWidth = 10) 
+
+
+# trying out some options
+#NodeGroup = NULL - all nodes are grey
+sankeyNetwork(Links = links, Nodes = nodes, Source = "source",
+              Target = "target",  NodeID = "nodes", Value = "values",
+              fontSize = 12, nodeWidth = 10, NodeGroup=NULL)
+
+#LinkGroup = "level"
+sankeyNetwork(Links = links, Nodes = nodes, Source = "source",
+              Target = "target",  NodeID = "nodes", Value = "values",
+              fontSize = 12, nodeWidth = 10, NodeGroup = Null)
+
+
 
 #### CONDITIONAL DENSITY PLOTS ####
 
