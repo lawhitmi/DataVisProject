@@ -1,13 +1,3 @@
-#Start cleaning everything
-rm(list=ls())
-
-#Read the csv
-data <- read.csv("datasets_934_1711_astronauts.csv",na.strings=c(""," ","NA")) #replace blanks with 'NA'
-
-#Check the data
-str(data)
-colnames(data)
-
 ###### Libs 
 
 library(fmsb)
@@ -17,75 +7,68 @@ library(tidyr)
 library(packcircles)
 library(latticeExtra)
 
+#Start cleaning the environment 
+rm(list=ls())
 
+#Read the csv
+data <- read.csv("datasets_934_1711_astronauts.csv",na.strings=c(""," ","NA")) #replace blanks with 'NA'
+
+#Check the data
+str(data)
+colnames(data)
 theme_set(theme_minimal())
-# Lets try to plot 'Space.Flight..hr.' and 'Space.Walks..hr.' by 'Year' the  dataset
 head(data)
 
-# Try 1
-# Check the data for how many number of flights per year
+###############
+# Graph No.1 "How many number of flights per year"
 # First only take the 2 columns that i need and remove the NA
-selected_col <- select(data, Year, Space.Flights)
-head(selected_col)
 
-NotNA <- filter(selected_col, Year !=  'NA')
-head(NotNA)
+data.flights <- select(data, Year, Space.Flights)
+data.flightsNotNA <- filter(data.flights, Year !=  'NA')
 
+TotalFlights <- aggregate(x = data.flightsNotNA$Space.Flights,by = list(data.flightsNotNA$Year),FUN = sum)              
 
-TotalFlightsRecords <- NotNA %>% group_by(Year) %>% tally() #Test
-
-TotalFlights <- NotNA %>% group_by(Year) %>% summarize(Total = sum(Space.Flights, na.rm = TRUE))
-
-NoSpaceFlights <- merge(TotalFlights,TotalFlightsRecords,by="Year")
-
-#Basic graph about number of flights 
-ggplot(data = NoSpaceFlights, aes(x = Year, y = Total))+
+ggplot(data = TotalFlights, aes(x = Group.1, y = x))+
   geom_line(color = "#00AFBB", size = 2)
 
 ###############
-# Try 2
-# Try to compare the flight hours with the walk hours by year 
+# Graph No.2 "How many hours they spend flying in space compare to the walking hours in space"  
+
+data.flights <- select(data, Year, Space.Flight..hr.,Space.Walks..hr.)
+data.flightsNotNA <- filter(data.flights, Year !=  'NA')
 
 
+gby1 <- data.flightsNotNA %>% 
+          group_by(Year) %>% 
+            summarise_at(vars(Space.Flight..hr.),
+                          list(TotalFlight=sum))
+    
+gby2 <- data.flightsNotNA %>% 
+          group_by(Year) %>% 
+            summarise_at(vars(Space.Walks..hr.),
+                          list(TotalWalking=sum))
 
-selected_col <- select(data, Year, Space.Flight..hr.,Space.Walks..hr.)
-head(selected_col)
-
-NotNA <- filter(selected_col, Year !=  'NA')
-head(NotNA)
-
-gby1 <- NotNA %>% group_by(Year) %>% summarize(TotalHrFlights = sum(Space.Flight..hr., na.rm = TRUE))
-gby2 <- NotNA %>% group_by(Year) %>% summarize(TotalHrWalks = sum(Space.Walks..hr., na.rm = TRUE))
-
-NewData <- merge(gby1,gby2,by="Year")
-NewData = transform(NewData, TotalHrFlights = as.numeric(TotalHrFlights))
-NewData[2:3] <- lapply(NewData[2:3], function(x) c(scale(x)))
+data.hours <- merge(gby1,gby2,by="Year")
+data.hours[2:3] <- lapply(data.hours[2:3], function(x) c(scale(x)))
 
 
-# usual line chart
-xyplot(TotalHrFlights + TotalHrWalks ~ Year, NewData, type = "l", col=c("steelblue", "#69b3a2") , lwd=2)
+xyplot(TotalFlight + TotalWalking ~ Year, data.hours, type = "l", col=c("steelblue", "#69b3a2") , lwd=2)
 
 ###############
-# Try 3 
+# Graph No.3 "How many hours they spend flying in space"
+# Look for a specific reason for 1996
 
-selected_col <- select(data, Year, Space.Flight..hr.,Space.Walks..hr.)
-NotNA <- filter(selected_col, Year !=  'NA')
+data.hours <- merge(gby1,gby2,by="Year")
 
-gby1 <- NotNA %>% group_by(Year) %>% summarize(TotalHrFlights = sum(Space.Flight..hr., na.rm = TRUE))
-gby2 <- NotNA %>% group_by(Year) %>% summarize(TotalHrWalks = sum(Space.Walks..hr., na.rm = TRUE))
-
-NewData <- merge(gby1,gby2,by="Year")
-NewData = transform(NewData, TotalHrFlights = as.numeric(TotalHrFlights))
-
-packing <- circleProgressiveLayout(NewData$TotalHrFlights, sizetype='area')
-dataPlot <- cbind(NewData, packing)
+packing <- circleProgressiveLayout(data.hours$TotalFlight, sizetype='area')
+dataPlot <- cbind(data.hours, packing)
 dat.gg <- circleLayoutVertices(packing, npoints=50)
 
 ggplot() + 
   # Make the bubbles
   geom_polygon(data = dat.gg, aes(x, y, group = id, fill=as.factor(id)), colour = "black", alpha = 0.6) +
   # Add text in the center of each bubble + control its size
-  geom_text(data = dataPlot, aes(x, y, size=TotalHrFlights, label = Year)) +
+  geom_text(data = dataPlot, aes(x, y, size=TotalFlight, label = Year)) +
   scale_size_continuous(range = c(1,4)) +
   # General theme:
   theme_void() + 
@@ -94,65 +77,34 @@ ggplot() +
   ggtitle('Total Hours Flights by Year')
 
 ###############
-# Try 4
+# Graph No.4 "How is the proportion of women spending space flying hours comparing to male" 
 
-selected_col <- select(data, Year, Gender,Space.Flight..hr.,Space.Walks..hr.)
-NotNA <- filter(selected_col, Year !=  'NA')
-gby1 <- NotNA %>% group_by(Year,Gender) %>% summarize(TotalHrFlights = sum(Space.Flight..hr., na.rm = TRUE))
-gby2 <- NotNA %>% group_by(Year,Gender) %>% summarize(TotalHrWalks = sum(Space.Walks..hr., na.rm = TRUE))
-NewData <- merge(gby1,gby2,by=c("Year","Gender"))
-PivotData = dcast(NewData, Gender ~ Year, value.var = "TotalHrFlights")
-
-Female = PivotData[1,2:ncol(PivotData)]
-Male = PivotData[2,2:ncol(PivotData)]
-
-Min = min(NewData[3])
-Max = max(NewData[3])
-
-Female <- rbind(rep(Max,20) , rep(Min,20) , Female)
-
-radarchart(Female)
-
-Male <- rbind(rep(Max,20) , rep(Min,20) , Male)
-
-radarchart(Male)
+data.gender <- select(data, Year, Gender,Space.Flight..hr.,Space.Walks..hr.)
+data.genderNotNA <- filter(data.gender, Year !=  'NA')
 
 
-radarchart( Female  , axistype=1 , 
-            #custom polygon
-            pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=4 , 
-            #custom the grid
-            cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,20,5), cglwd=0.8,
-            #custom labels
-            vlcex=0.8 
-)
+gby1 <- data.genderNotNA %>% 
+          group_by(Year,Gender) %>% 
+                summarise_at(vars(Space.Flight..hr.),
+                    list(TotalFlight=sum))
+
+gby2 <- data.genderNotNA %>% 
+              group_by(Year,Gender) %>% 
+                summarise_at(vars(Space.Walks..hr.),
+                             list(TotalWalk=sum))
 
 
-radarchart( Male  , axistype=1 , 
-            #custom polygon
-            pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=4 , 
-            #custom the grid
-            cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,20,5), cglwd=0.8,
-            #custom labels
-            vlcex=0.8 
-)
+data.hourGender <- merge(gby1,gby2,by=c("Year","Gender"))
 
-###############
-# Try 5
+PivotData = dcast(data.hourGender, Gender ~ Year, value.var = "TotalFlight")
 
-selected_col <- select(data, Year, Gender,Space.Flight..hr.,Space.Walks..hr.)
-NotNA <- filter(selected_col, Year !=  'NA')
-gby1 <- NotNA %>% group_by(Year,Gender) %>% summarize(TotalHrFlights = sum(Space.Flight..hr., na.rm = TRUE))
-gby2 <- NotNA %>% group_by(Year,Gender) %>% summarize(TotalHrWalks = sum(Space.Walks..hr., na.rm = TRUE))
-NewData <- merge(gby1,gby2,by=c("Year","Gender"))
-PivotData = dcast(NewData, Gender ~ Year, value.var = "TotalHrFlights")
 PivotData[is.na(PivotData)] <- 0
 
 data = PivotData[2:ncol(PivotData)]
 rownames(data) <- c("Female", "Male")
 
-Min = min(NewData[3])
-Max = max(NewData[3])
+Min = min(data.hourGender[3])
+Max = max(data.hourGender[3])
 
 data <- rbind(rep(Max,20) , rep(Min,20) , data)
 
