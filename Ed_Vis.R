@@ -6,6 +6,7 @@ library(dplyr)
 library(tidyr)
 library(packcircles)
 library(latticeExtra)
+library(reshape2)
 
 #Start cleaning the environment 
 rm(list=ls())
