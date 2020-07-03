@@ -21,8 +21,10 @@ checkNA(dat$Military.Rank) # 150 missing. Note that a NA probably means no milit
 # Look further at the Majors
 sort(table(dat$Undergraduate.Major),decreasing=TRUE)
 cumsum(sort(prop.table(table(dat$Undergraduate.Major)),decreasing=TRUE))
-par(las=2,mar=c(12,4,1,1))
-plot(sort(table(dat$Undergraduate.Major),decreasing=TRUE),cex.axis=0.75,main="Frequency of Undergraduate Majors (Sorted)")
+par(mfrow=c(2,1),las=1,mar=c(4,4,1,1))
+plot(sort(table(dat$Undergraduate.Major),decreasing=TRUE),
+     cex.axis=0.5,main="Frequency of Undergraduate Majors (Sorted)",
+     ylab="Frequency")
 levels(dat$Undergraduate.Major) #83 unique values
 names(sort(table(dat$Undergraduate.Major),decreasing=TRUE)[1:5])
 sort(table(dat[dat$Undergraduate.Major=="Aeronautical Engineering",]$Graduate.Major),decreasing=TRUE)
@@ -31,7 +33,7 @@ sort(table(dat[dat$Undergraduate.Major=="Aeronautical Engineering",]$Graduate.Ma
 sort(table(dat$Graduate.Major),decreasing=TRUE)
 cumsum(sort(prop.table(table(dat$Graduate.Major)),decreasing=TRUE))
 par(las=2,mar=c(12,4,1,1))
-plot(sort(table(dat$Graduate.Major),decreasing=TRUE),cex.axis=0.75,main="Frequency of Graduate Majors (Sorted)")
+plot(sort(table(dat$Graduate.Major),decreasing=TRUE)[1:10],cex.axis=0.5,main="Frequency of Graduate Majors (Sorted)",ylab="Frequency")
 levels(dat$Graduate.Major) # 143 unique values
 
 # Alma Mater
