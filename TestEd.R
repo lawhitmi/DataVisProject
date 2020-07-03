@@ -119,7 +119,9 @@ ggraph(mygraph, layout = 'circlepack', weight=size ) +
   geom_node_label( aes(label=shortname, filter=leaf, size=size)) +
   theme_void() + 
   theme(legend.position="FALSE") + 
-  scale_fill_viridis()
+  scale_fill_viridis() +
+  ggtitle('Space Flying Hours.', subtitle = 'Male Vs Female')
+
 
 
 

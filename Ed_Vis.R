@@ -106,8 +106,8 @@ PivotData[is.na(PivotData)] <- 0
 PivotData = PivotData[2:ncol(PivotData)]
 rownames(PivotData) <- c("Female", "Male")
 
-Min = min(data.hourGender[3])
-Max = max(data.hourGender[3])
+Min = min(data.hourGender[4])
+Max = max(data.hourGender[4])
 
 PivotData <- rbind(rep(Max,20) , rep(Min,20) , PivotData)
 
