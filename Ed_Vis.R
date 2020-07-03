@@ -7,6 +7,7 @@ library(tidyr)
 library(packcircles)
 library(latticeExtra)
 library(reshape2)
+library(RColorBrewer)
 
 #Start cleaning the environment 
 rm(list=ls())
@@ -78,31 +79,44 @@ ggplot() +
   ggtitle('Total Hours Flights by Year')
 
 ###############
-# Graph No.4 "How is the proportion of women spending space flying hours comparing to male" 
+# Graph No.4 "How is the proportion of women spending space walking hours comparing to male" 
 
 data.gender <- select(data, Year, Gender,Space.Flight..hr.,Space.Walks..hr.)
 data.genderNotNA <- filter(data.gender, Year !=  'NA')
 
 
-gby1 <- data.genderNotNA %>% 
-          group_by(Year,Gender) %>% 
-                summarise_at(vars(Space.Flight..hr.),
+TotalWalkHours <- data.genderNotNA %>% 
+          group_by(Year) %>% 
+                summarise_at(vars(Space.Walks..hr.),
                     list(TotalFlight=sum))
 
-gby2 <- data.genderNotNA %>% 
+data.hourGender <- data.genderNotNA %>% 
               group_by(Year,Gender) %>% 
                 summarise_at(vars(Space.Walks..hr.),
                              list(TotalWalk=sum))
 
 
-data.hourGender <- merge(gby1,gby2,by=c("Year","Gender"))
+for (row in 1:nrow(TotalWalkHours)) {
+  year <- TotalWalkHours[row,1]
+  total <- TotalWalkHours[row,2]
 
-data.hourGender[3:4] <- lapply(data.hourGender[3:4], function(x) c(scale(x)))
+  for (i in 1:nrow(data.hourGender)){
+    if(year == data.hourGender[i,1]){
+      data.hourGender[i,4] <- (data.hourGender[i,3] / total)
+    }
+  }
+}
+colnames(data.hourGender) <- c('Year','Gender','TotalWalk',"Proportion")
 
-PivotData = dcast(data.hourGender, Gender ~ Year, value.var = "TotalWalk")
 
+#data.hourGender <- merge(gby1,gby2,by=c("Year","Gender"))
+#data.hourGender <- data.hourGender[-3] 
+#<- lapply(data.hourGender[3:4], function(x) c(scale(x)))
+
+
+
+PivotData = dcast(data.hourGender, Gender ~ Year, value.var = "Proportion")
 PivotData[is.na(PivotData)] <- 0
-
 PivotData = PivotData[2:ncol(PivotData)]
 rownames(PivotData) <- c("Female", "Male")
 
@@ -116,9 +130,9 @@ colors_in=c( rgb(0.2,0.5,0.5,0.4), rgb(0.8,0.2,0.5,0.4) , rgb(0.7,0.5,0.1,0.4) )
 
 radarchart( PivotData  , axistype=1 , 
             #custom polygon
-            pcol=colors_border , pfcol=colors_in , plwd=4 , plty=1,
+            pcol=colors_border , pfcol=colors_in , plwd=1 , plty=1,
             #custom the grid
-            cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,20,5), cglwd=0.8,
+            cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,1,1), cglwd=0.6,
             #custom labels
             vlcex=0.8 ,title=paste("Space Walk Hours. Male Vs Female "),
 )
@@ -129,7 +143,8 @@ legend(x=1, y=1, legend = rownames(PivotData[-c(1,2),]), bty = "n", pch=20 , col
 
 
 
-###### Graph 5.
+###############
+# Graph No.5 "How is the proportion of women spending space flying hours comparing to male" 
 
 theme_set(theme_minimal())
 data <- read.csv("datasets_934_1711_astronauts.csv",na.strings=c(""," ","NA")) #replace blanks with 'NA'
@@ -222,35 +237,38 @@ ggraph(mygraph, layout = 'circlepack', weight=size) +
   theme_void()
 
 # Left: color depends of depth
-p <- ggraph(mygraph, layout = 'circlepack', weight=size) + 
-  geom_node_circle(aes(fill = depth)) +
-  theme_void() + 
-  theme(legend.position="FALSE")
-p
+#p <- ggraph(mygraph, layout = 'circlepack', weight=size) + 
+#  geom_node_circle(aes(fill = depth)) +
+#  theme_void() + 
+#  theme(legend.position="FALSE")
+#p
 # Adjust color palette: viridis
-p + scale_fill_viridis()
+#p + scale_fill_viridis()
 # Adjust color palette: colorBrewer
-p + scale_fill_distiller(palette = "RdPu") 
+#p + scale_fill_distiller(palette = "RdPu") 
 
 
 # Rebuild the graph object
 mygraph <- graph_from_data_frame( edgesNasa, vertices=verticesNasa )
 
 # left
-ggraph(mygraph, layout = 'circlepack', weight=size ) + 
-  geom_node_circle(aes(fill = depth)) +
-  geom_node_text( aes(label=shortname, filter=leaf, fill=depth, size=size)) +
-  theme_void() + 
-  theme(legend.position="FALSE") + 
-  scale_fill_viridis()
+#ggraph(mygraph, layout = 'circlepack', weight=size ) + 
+#  geom_node_circle(aes(fill = depth)) +
+#  geom_node_text( aes(label=shortname, filter=leaf, fill=depth, size=size)) +
+#  theme_void() + 
+#  theme(legend.position="FALSE") + 
+#  scale_fill_viridis()
 
 ggraph(mygraph, layout = 'circlepack', weight=size ) + 
   geom_node_circle(aes(fill = depth)) +
   geom_node_label( aes(label=shortname, filter=leaf, size=size)) +
   theme_void() + 
   theme(legend.position="FALSE") + 
-  scale_fill_viridis() +
-  ggtitle('Space Flying Hours.', subtitle = 'Male Vs Female')
+  scale_fill_distiller(palette = "Dark2") +
+  labs(title="Space Flying Hours", 
+       subtitle = "Male Vs Female", 
+       caption = "Data Source: Kaggle NASA Astronauts")
+
 
 
 
