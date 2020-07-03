@@ -19,6 +19,7 @@
 
 # RStudio files
 .Rproj.user/
+DataVisProject.Rproj
 
 # produced vignettes
 vignettes/*.html
