@@ -97,22 +97,24 @@ gby2 <- data.genderNotNA %>%
 
 data.hourGender <- merge(gby1,gby2,by=c("Year","Gender"))
 
+data.hourGender[3:4] <- lapply(data.hourGender[3:4], function(x) c(scale(x)))
+
 PivotData = dcast(data.hourGender, Gender ~ Year, value.var = "TotalFlight")
 
 PivotData[is.na(PivotData)] <- 0
 
-data = PivotData[2:ncol(PivotData)]
-rownames(data) <- c("Female", "Male")
+PivotData = PivotData[2:ncol(PivotData)]
+rownames(PivotData) <- c("Female", "Male")
 
 Min = min(data.hourGender[3])
 Max = max(data.hourGender[3])
 
-data <- rbind(rep(Max,20) , rep(Min,20) , data)
+PivotData <- rbind(rep(Max,20) , rep(Min,20) , PivotData)
 
 colors_border=c( rgb(0.2,0.5,0.5,0.9), rgb(0.8,0.2,0.5,0.9) , rgb(0.7,0.5,0.1,0.9) )
 colors_in=c( rgb(0.2,0.5,0.5,0.4), rgb(0.8,0.2,0.5,0.4) , rgb(0.7,0.5,0.1,0.4) )
 
-radarchart( data  , axistype=1 , 
+radarchart( PivotData  , axistype=1 , 
             #custom polygon
             pcol=colors_border , pfcol=colors_in , plwd=4 , plty=1,
             #custom the grid
@@ -122,4 +124,4 @@ radarchart( data  , axistype=1 ,
 )
 
 # Add a legend
-legend(x=0.7, y=1, legend = rownames(data[-c(1,2),]), bty = "n", pch=20 , col=colors_in , text.col = "grey", cex=1.2, pt.cex=3)
+legend(x=0.7, y=1, legend = rownames(PivotData[-c(1,2),]), bty = "n", pch=20 , col=colors_in , text.col = "grey", cex=1.2, pt.cex=3)
