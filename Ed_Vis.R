@@ -125,8 +125,13 @@ Max = max(data.hourGender[4])
 
 PivotData <- rbind(rep(Max,20) , rep(Min,20) , PivotData)
 
-colors_border=c( rgb(0.2,0.5,0.5,0.9), rgb(0.8,0.2,0.5,0.9) , rgb(0.7,0.5,0.1,0.9) )
-colors_in=c( rgb(0.2,0.5,0.5,0.4), rgb(0.8,0.2,0.5,0.4) , rgb(0.7,0.5,0.1,0.4) )
+#Female: "#D95F02", Male: "#1B9E77"
+
+#colors_border=c( rgb(0.2,0.5,0.5,0.9), rgb(0.8,0.2,0.5,0.9) , rgb(0.7,0.5,0.1,0.9) )
+#colors_in=c( rgb(0.2,0.5,0.5,0.4), rgb(0.8,0.2,0.5,0.4) , rgb(0.7,0.5,0.1,0.4) )
+
+colors_border=c( '#1B9E77E6','#D95F02E6' )
+colors_in=c( '#1B9E7766','#D95F0266')
 
 radarchart( PivotData  , axistype=1 , 
             #custom polygon
@@ -288,26 +293,22 @@ TotalRecruit <- TotalRecruit[order(TotalRecruit[,1],TotalRecruit[,2]),]
 Recruit <- as.data.frame((table(data.gender$Year)))
 colnames(Recruit) <- c('Year','Total')
 
-
-
 #totalRecruitXGender <- data.gender %>% count(Year, Gender)
 
-for (row in 1:nrow(TotalRecruit)) {
-  year <- TotalRecruit[row,1]
-  total <- TotalRecruit[row,2]
-
-  for (i in 1:nrow(totalRecruitXGender)){
-    if(year == totalRecruitXGender[i,1]){
-      n <- totalRecruitXGender[i,3]
-      if(totalRecruitXGender[i,2] == 'Male'){
-        TotalRecruit[row,3] <- (n / total)
-      }
-      if(totalRecruitXGender[i,2] == 'Female'){
-        TotalRecruit[row,4] <- (n / total)
-      }
+for (row in 1:nrow(Recruit)) {
+  year <- Recruit[row,1]
+  total <- Recruit[row,2]
+  
+  for (i in 1:nrow(TotalRecruit)){
+    if(year == TotalRecruit[i,1]){
+      TotalRecruit[i,4] <- total
+      TotalRecruit[i,5] <- TotalRecruit[i,3] / total
     }
   }
 }
+colnames(TotalRecruit) <- c('Year','Gender','Total_Gender_Enroll','Total_Enroll_Year','Proportion_Enroll')
+
+
 
 TotalWalkHours <- data.genderNotNA %>% 
   group_by(Year) %>% 
@@ -330,29 +331,43 @@ for (row in 1:nrow(TotalWalkHours)) {
     }
   }
 }
-colnames(data.hourGender) <- c('Year','Gender','TotalWalk',"Proportion")
-
-for (row in 1:nrow(TotalRecruit)) {
-  year <- TotalRecruit[row,1]
-  
-  for (i in 1:nrow(data.hourGender)){
-    if(year == data.hourGender[i,1]){
-      gender <- data.hourGender[i,2]
-      
-      if(gender == 'Male'){
-        TotalRecruit[row,5] <- data.hourGender[i,4]
-      }
-      if(gender == 'Female'){
-        TotalRecruit[row,6] <- data.hourGender[i,4]
-      }
-      
-    }
-  }
-}
-
-colnames(TotalRecruit) <- c('Year','Total_Enroll','Male_Enroll','Female_Enroll','Male_Walk','Female_Walk')
-TotalRecruit[is.na(TotalRecruit)] <- 0
+colnames(data.hourGender) <- c('Year','Gender','TotalWalk',"Proportion_Walk")
 
 
+TotalProportions <- merge(TotalRecruit,data.hourGender,by=c("Year",'Gender'))
+
+
+FemaleProportions <- TotalProportions[TotalProportions$Gender == "Female", ]
+
+FemaleProportions <- FemaleProportions[,-c(3,4,6)]
+
+piv1 = dcast(FemaleProportions, Gender ~ Year, value.var = c("Proportion_Enroll"))
+piv2 = dcast(FemaleProportions, Gender ~ Year, value.var = c("Proportion_Walk"))
+
+PivotData <- rbind(piv1,piv2)
+
+PivotData[is.na(PivotData)] <- 0
+PivotData = PivotData[2:ncol(PivotData)]
+rownames(PivotData) <- c("Enroll", "Walk")
+
+Min = 0
+Max = 1
+
+PivotData <- rbind(rep(Max,20) , rep(Min,20) , PivotData)
+
+colors_border=c( '#1B9E77E6','#D95F02E6' )
+colors_in=c( '#1B9E7766','#D95F0266')
+
+radarchart( PivotData  , axistype=1 , 
+            #custom polygon
+            pcol=colors_border , pfcol=colors_in , plwd=1 , plty=1,
+            #custom the grid
+            cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,1,1), cglwd=0.6,
+            #custom labels
+            vlcex=0.8 ,title=paste("Female Enrollment Vs Space Walks"),
+)
+
+# Add a legend
+legend(x=1, y=1, legend = rownames(PivotData[-c(1,2),]), bty = "n", pch=20 , col=colors_in , text.col = "grey", cex=1.0, pt.cex=3)
 
 
