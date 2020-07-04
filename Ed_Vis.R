@@ -270,6 +270,89 @@ ggraph(mygraph, layout = 'circlepack', weight=size ) +
        caption = "Data Source: Kaggle NASA Astronauts")
 
 
+###############
+# Graph No.6 
+
+
+data.gender <- select(data, Year, Gender,Space.Flight..hr.,Space.Walks..hr.)
+data.genderNotNA <- filter(data.gender, Year !=  'NA')
+
+data.gender <- data.genderNotNA[order(data.genderNotNA$Year),]
+
+TotalRecruit <- as.data.frame(table(data.gender[,1:2]))
+colnames(TotalRecruit) <- c('Year','Gender','Total')
+TotalRecruit$Year <- as.numeric(as.character(TotalRecruit$Year))
+str(TotalRecruit)
+TotalRecruit <- TotalRecruit[order(TotalRecruit[,1],TotalRecruit[,2]),]
+
+Recruit <- as.data.frame((table(data.gender$Year)))
+colnames(Recruit) <- c('Year','Total')
+
+
+
+#totalRecruitXGender <- data.gender %>% count(Year, Gender)
+
+for (row in 1:nrow(TotalRecruit)) {
+  year <- TotalRecruit[row,1]
+  total <- TotalRecruit[row,2]
+
+  for (i in 1:nrow(totalRecruitXGender)){
+    if(year == totalRecruitXGender[i,1]){
+      n <- totalRecruitXGender[i,3]
+      if(totalRecruitXGender[i,2] == 'Male'){
+        TotalRecruit[row,3] <- (n / total)
+      }
+      if(totalRecruitXGender[i,2] == 'Female'){
+        TotalRecruit[row,4] <- (n / total)
+      }
+    }
+  }
+}
+
+TotalWalkHours <- data.genderNotNA %>% 
+  group_by(Year) %>% 
+  summarise_at(vars(Space.Walks..hr.),
+               list(TotalFlight=sum))
+
+data.hourGender <- data.genderNotNA %>% 
+  group_by(Year,Gender) %>% 
+  summarise_at(vars(Space.Walks..hr.),
+               list(TotalWalk=sum))
+
+
+for (row in 1:nrow(TotalWalkHours)) {
+  year <- TotalWalkHours[row,1]
+  total <- TotalWalkHours[row,2]
+  
+  for (i in 1:nrow(data.hourGender)){
+    if(year == data.hourGender[i,1]){
+      data.hourGender[i,4] <- (data.hourGender[i,3] / total)
+    }
+  }
+}
+colnames(data.hourGender) <- c('Year','Gender','TotalWalk',"Proportion")
+
+for (row in 1:nrow(TotalRecruit)) {
+  year <- TotalRecruit[row,1]
+  
+  for (i in 1:nrow(data.hourGender)){
+    if(year == data.hourGender[i,1]){
+      gender <- data.hourGender[i,2]
+      
+      if(gender == 'Male'){
+        TotalRecruit[row,5] <- data.hourGender[i,4]
+      }
+      if(gender == 'Female'){
+        TotalRecruit[row,6] <- data.hourGender[i,4]
+      }
+      
+    }
+  }
+}
+
+colnames(TotalRecruit) <- c('Year','Total_Enroll','Male_Enroll','Female_Enroll','Male_Walk','Female_Walk')
+TotalRecruit[is.na(TotalRecruit)] <- 0
+
 
 
 
