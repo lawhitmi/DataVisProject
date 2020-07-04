@@ -7,6 +7,7 @@ library(tidyr) #separate
 library(RColorBrewer)
 #library(stringr) # str_extract
 library(htmlwidgets) # to add onRender?
+library(ggplot2)
 
 #### LOAD DATA ####
 dat <- read.csv("datasets_934_1711_astronauts.csv",na.strings=c(""," ","NA")) #replace blanks with 'NA'
@@ -81,7 +82,7 @@ cleanUndergrad <- function(dat) {
 cleanUndergrad1 <- function(dat) {
   dat$Undergraduate.Major <- sapply(dat$Undergraduate.Major,as.character)
   dat$Undergraduate.Major[is.na(dat$Undergraduate.Major)] <- "NoUndergradDeg"
-  
+  dat$Undergraduate.Orig <- dat$Undergraduate.Major
   unique(dat$Undergraduate.Major) #84
   
   nrow(dat[dat$Undergraduate.Major=="Physics",]) #35
@@ -234,6 +235,12 @@ dat <- cleanMil1(cleanGrad1(cleanUndergrad1(cleanBirth(dat))))
 # sankeyNetwork(Links = Energy$links, Nodes = Energy$nodes, Source = 'source',
 #               Target = 'target', Value = 'value', NodeID = 'name',
 #               LinkGroup = 'energy_type', NodeGroup = NULL)
+#### PLOT FOR MAJOR GROUPINGS ####
+groups=data.frame(table(dat$Undergraduate.Orig,dat$Undergraduate.Major))
+groups <- groups[groups$Freq!=0,]
+ggplot(groups, aes(fill=Var1, y=Freq, x=Var2)) + 
+  geom_bar(position="stack",stat="identity")+
+  theme(legend.position = "none")
 
 #### SANKEY PLOT ####
 # Generate Node Names df
@@ -469,18 +476,20 @@ sn <- sankeyNetwork(Links = sank$links, Nodes = sank$nodes, Source = "source",
               fontSize = 18, nodeWidth = 10, LinkGroup = "linkgroup",iterations=1000, 
               colourScale = my_color, nodePadding = 30,sinksRight = FALSE)
 sn
-# onRender(sn,
-#          '
+# onRender(
+#   sn,
+#   '
 # function(el,x){
 #   // select all our node text
-#   var node_text = d3.select("#htmlwidget-d9fa3100dc0c6f57e8c6")
-#     .append("div")
-#     .append("h2")
+#   var node_text = d3.select(el)
+#     .selectAll(".node text")
 #     //and make them match
 #     //https://github.com/christophergandrud/networkD3/blob/master/inst/htmlwidgets/sankeyNetwork.js#L180-L181
+#     .attr("x", 6 + x.options.nodeWidth)
+#     .attr("text-anchor", "start");
 # }
 # '
-#         )
+# )
 
 display.brewer.pal(12,"Set3")
 brewer.pal(12,"Set3")
