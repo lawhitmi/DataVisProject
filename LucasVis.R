@@ -439,12 +439,136 @@ sankeyPrep2 <- function(dat) {
   links$source <- as.numeric(links$source) - 1 # must be zero indexed
   links$target <- as.numeric(links$target) - 1 # must be zero indexed
   return(list(links=links,nodes=nodes))
-} # Swaps the gender and birthplace levels
+} # Swaps the gender and birthplace levels - for overall sankey only
+sankeyPrep3 <- function(dat) {
+  nodes <- data.frame(c(levels(dat$USborn), levels(dat$Gender), levels(dat$Military.Branch), unique(dat$Undergraduate.Major), unique(dat$Graduate.Major))) 
+  names(nodes) <- c("nodes")
+  nodes <- data.frame(nodes[nodes$nodes!="NoUndergradDeg",]) #Remove this here as it is filtered out with the threshold later
+  names(nodes) <- c("nodes")
+  nodes$index <- 1:nrow(nodes)
+  nodes$concat <- paste0(nodes$index,",",nodes$nodes)
+  
+  # Generate Link df
+  end1 <- length(levels(dat$USborn))
+  end2 <- end1+length(levels(dat$Gender))
+  end3 <- end2+length(levels(dat$Military.Branch))
+  end4 <- end3+length(unique(dat$Undergraduate.Major))-1 # -1 is to compensate for removing NoUndergradDeg
+  end5 <- end4+length(unique(dat$Graduate.Major))
+  level1 <- crossing(nodes[1:end1,"concat"], nodes[(end1+1):end2,"concat"])
+  level2 <- crossing(nodes[(end1+1):end2,"concat"], nodes[(end2+1):end3,"concat"])
+  level3 <- crossing(nodes[(end2+1):end3,"concat"], nodes[(end3+1):end4,"concat"])
+  level4 <- crossing(nodes[(end3+1):end4,"concat"], nodes[(end4+1):end5,"concat"])
+  level1$level <- 1
+  level2$level <- 2
+  level3$level <- 3
+  level4$level <- 4
+  
+  names(level1) <- c("sourcename","targetname","level")
+  names(level2) <- c("sourcename","targetname","level")
+  names(level3) <- c("sourcename","targetname","level")
+  names(level4) <- c("sourcename","targetname","level")
+  
+  links <- rbind(level1,level2,level3,level4)
+  links <- links %>% separate("targetname",c("target","targetname"),sep=",")
+  links <- links %>% separate("sourcename",c("source", "sourcename"), sep=",")
+  
+  # Calculate values
+  level1.calc <- function (x,y) {
+    return(nrow(dat[dat$USborn==x & dat$Gender==y,]))
+  } 
+  level2.calc <- function (x,y) {
+    return(nrow(dat[dat$Gender==x & dat$Military.Branch==y,]))
+  }
+  level3.calc <- function (x,y) {
+    return(nrow(dat[dat$Military.Branch==x & dat$Undergraduate.Major==y,]))
+  }
+  level4.calc <- function (x,y) {
+    return(nrow(dat[dat$Undergraduate.Major==x & dat$Graduate.Major==y,]))
+  }
+  valueCalc <- function (x,y,level) {
+    if (level==1) return(level1.calc(x,y))
+    if (level==2) return(level2.calc(x,y))
+    if (level==3) return(level3.calc(x,y))
+    if (level==4) return(level4.calc(x,y))
+  }
+  level.values <- c(1:nrow(links))
+  for (i in 1:nrow(links)) {
+    level.values[i] <- valueCalc(links[i,]$sourcename,links[i,]$targetname,links[i,]$level)
+  }
+  
+  links$values <- level.values
+  links$source <- as.numeric(links$source) - 1 # must be zero indexed
+  links$target <- as.numeric(links$target) - 1 # must be zero indexed
+  return(list(links=links,nodes=nodes))
+} # for pre1978
+sankeyPrep4 <- function(dat) {
+  nodes <- data.frame(c(levels(dat$USborn), levels(dat$Gender), levels(dat$Military.Branch), unique(dat$Undergraduate.Major), unique(dat$Graduate.Major))) 
+  names(nodes) <- c("nodes")
+  #nodes <- data.frame(nodes[nodes$nodes!="NoUndergradDeg",]) #Remove this here as it is filtered out with the threshold later
+  names(nodes) <- c("nodes")
+  nodes$index <- 1:nrow(nodes)
+  nodes$concat <- paste0(nodes$index,",",nodes$nodes)
+  
+  # Generate Link df
+  end1 <- length(levels(dat$USborn))
+  end2 <- end1+length(levels(dat$Gender))
+  end3 <- end2+length(levels(dat$Military.Branch))
+  end4 <- end3+length(unique(dat$Undergraduate.Major))-1 # -1 is to compensate for removing NoUndergradDeg
+  end5 <- end4+length(unique(dat$Graduate.Major))
+  level1 <- crossing(nodes[1:end1,"concat"], nodes[(end1+1):end2,"concat"])
+  level2 <- crossing(nodes[(end1+1):end2,"concat"], nodes[(end2+1):end3,"concat"])
+  level3 <- crossing(nodes[(end2+1):end3,"concat"], nodes[(end3+1):end4,"concat"])
+  level4 <- crossing(nodes[(end3+1):end4,"concat"], nodes[(end4+1):end5,"concat"])
+  level1$level <- 1
+  level2$level <- 2
+  level3$level <- 3
+  level4$level <- 4
+  
+  names(level1) <- c("sourcename","targetname","level")
+  names(level2) <- c("sourcename","targetname","level")
+  names(level3) <- c("sourcename","targetname","level")
+  names(level4) <- c("sourcename","targetname","level")
+  
+  links <- rbind(level1,level2,level3,level4)
+  links <- links %>% separate("targetname",c("target","targetname"),sep=",")
+  links <- links %>% separate("sourcename",c("source", "sourcename"), sep=",")
+  
+  # Calculate values
+  level1.calc <- function (x,y) {
+    return(nrow(dat[dat$USborn==x & dat$Gender==y,]))
+  } 
+  level2.calc <- function (x,y) {
+    return(nrow(dat[dat$Gender==x & dat$Military.Branch==y,]))
+  }
+  level3.calc <- function (x,y) {
+    return(nrow(dat[dat$Military.Branch==x & dat$Undergraduate.Major==y,]))
+  }
+  level4.calc <- function (x,y) {
+    return(nrow(dat[dat$Undergraduate.Major==x & dat$Graduate.Major==y,]))
+  }
+  valueCalc <- function (x,y,level) {
+    if (level==1) return(level1.calc(x,y))
+    if (level==2) return(level2.calc(x,y))
+    if (level==3) return(level3.calc(x,y))
+    if (level==4) return(level4.calc(x,y))
+  }
+  level.values <- c(1:nrow(links))
+  for (i in 1:nrow(links)) {
+    level.values[i] <- valueCalc(links[i,]$sourcename,links[i,]$targetname,links[i,]$level)
+  }
+  
+  links$values <- level.values
+  links$source <- as.numeric(links$source) - 1 # must be zero indexed
+  links$target <- as.numeric(links$target) - 1 # must be zero indexed
+  return(list(links=links,nodes=nodes))
+} # for post1978
 datPre1978 <- dat[dat$Year<1978,]
 datPost1978 <- dat[dat$Year>=1978,]
 datPre1978 <- datPre1978[!is.na(datPre1978$Year),]
 datPost1978 <- datPost1978[!is.na(datPost1978$Year),]
 sank <- sankeyPrep2(dat)
+sankPre1978 <- sankeyPrep3(datPre1978)
+sankPost1978 <- sankeyPrep4(datPost1978)
 # Plot Sankey
 
 # Source and Target in links df must be integer indices in the nodes df 
@@ -463,11 +587,10 @@ sank <- sankeyPrep2(dat)
 #LinkGroup and Colors 
 
 sank$links <- sank$links[sank$links$values>4,] # remove links with value less than this amount to clean up plot
-#sank$nodes <- sank$nodes[sank$nodes$nodes!="NoUndergradDeg",] # remove unused nodes
 sank$links$linkgroup <- rep("notpath",nrow(sank$links))
 sank$links[c(3,7,13,19),]$linkgroup <- "path" # manually set desired path to be highlighted
 my_color <- 'd3.scaleOrdinal() .domain(["path", "notpath","Male","Female","USBorn","BornAbroad"]) 
-    .range(["#FB8072", "#C3C2C4","#80B1D3", "#FDB462", "#B3DE69", "#FCCDE5", "#D9D9D9", "#BC80BD", "#CCEBC5", "#FFED6F"])'
+    .range(["#FB8072", "#C3C2C4","#D95F02", "#1B9E77", "#B3DE69", "#FCCDE5", "#D9D9D9", "#BC80BD", "#CCEBC5", "#FFED6F","#7570B3" ,"#E7298A", "#66A61E", "#E6AB02", "#A6761D" ,"#666666"])'
 
 
 
@@ -475,6 +598,31 @@ sn <- sankeyNetwork(Links = sank$links, Nodes = sank$nodes, Source = "source",
               Target = "target",  NodeID = "nodes", Value = "values",
               fontSize = 18, nodeWidth = 10, LinkGroup = "linkgroup",iterations=1000, 
               colourScale = my_color, nodePadding = 30,sinksRight = FALSE)
+sn
+
+# Pre 1978 sankey
+sankPre1978$links <- sankPre1978$links[sankPre1978$links$values>2,] # remove links with value less than this amount to clean up plot
+sankPre1978$links$linkgroup <- rep("notpath",nrow(sankPre1978$links))
+sankPre1978$links[c(3,7,13),]$linkgroup <- "path" # manually set desired path to be highlighted
+my_color <- 'd3.scaleOrdinal() .domain(["path", "notpath","Male","USBorn","BornAbroad"]) 
+    .range(["#FB8072", "#C3C2C4","#D95F02", "#1B9E77", "#B3DE69", "#FCCDE5", "#D9D9D9", "#BC80BD", "#CCEBC5", "#FFED6F","#7570B3" ,"#E7298A", "#66A61E", "#E6AB02", "#A6761D" ,"#666666"])'
+
+sn <- sankeyNetwork(Links = sankPre1978$links, Nodes = sankPre1978$nodes, Source = "source",
+                    Target = "target",  NodeID = "nodes", Value = "values",
+                    fontSize = 18, nodeWidth = 10, LinkGroup = "linkgroup",iterations=1000, 
+                    colourScale = my_color, nodePadding = 30,sinksRight = FALSE)
+sn
+# Post 1978 sankey
+sankPost1978$links <- sankPost1978$links[sankPost1978$links$values>2,] # remove links with value less than this amount to clean up plot
+sankPost1978$links$linkgroup <- rep("notpath",nrow(sankPost1978$links))
+sankPost1978$links[c(3,7,13,19),]$linkgroup <- "path" # manually set desired path to be highlighted
+my_color <- 'd3.scaleOrdinal() .domain(["path", "notpath","Male","Female","USBorn","BornAbroad"]) 
+    .range(["#FB8072", "#C3C2C4","#D95F02", "#1B9E77", "#B3DE69", "#FCCDE5", "#D9D9D9", "#BC80BD", "#CCEBC5", "#FFED6F","#7570B3" ,"#E7298A", "#66A61E", "#E6AB02", "#A6761D" ,"#666666"])'
+
+sn <- sankeyNetwork(Links = sankPost1978$links, Nodes = sankPost1978$nodes, Source = "source",
+                    Target = "target",  NodeID = "nodes", Value = "values",
+                    fontSize = 18, nodeWidth = 10, LinkGroup = "linkgroup",iterations=100, 
+                    colourScale = my_color, nodePadding = 30,sinksRight = FALSE)
 sn
 # onRender(
 #   sn,
@@ -491,8 +639,8 @@ sn
 # '
 # )
 
-display.brewer.pal(12,"Set3")
-brewer.pal(12,"Set3")
+display.brewer.pal(8,"Dark2")
+brewer.pal(8,"Dark2")
 #### CONDITIONAL DENSITY PLOTS ####
 
 par(mfrow=c(2,1))

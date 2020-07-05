@@ -61,14 +61,14 @@ levels(dat$Military.Branch)
 #### EDA Plots ####
 dev.off()
 plot(dat$Gender,main="Gender of Astronauts",col=c("#FDB462", "#80B1D3"))
-ggplot(dat, aes(x=factor(Gender)))+geom_bar(fill=c("#FDB462", "#80B1D3"))+ggtitle("Astronaut Gender",)+labs(y= "count", x = "Gender")+
+ggplot(dat, aes(x=factor(Gender)))+geom_bar(fill=c("#D95F02", "#1B9E77"))+ggtitle("Astronaut Gender",)+labs(y= "count", x = "Gender")+
   theme(plot.title = element_text(hjust = 0.5))+
   geom_text(stat='count', aes(label=..count..), vjust=-1)+
   theme(text = element_text(size = 20),axis.text = element_text(size = 18))
 
 hist(dat$Space.Flight..hr.,breaks=100,main="Histogram of Space Flight Time",xlab="Flight Time(hr)",col="#80B1D3")
 ggplot(data=dat, aes(Space.Flight..hr.)) + 
-  geom_histogram(binwidth=100,fill="#80B1D3")+
+  geom_histogram(binwidth=100,fill="#7570B3")+
   ggtitle("Hist of Space Flight Time",)+
   labs(y= "Frequency", x = "Flight Time (hr)")+
   theme(plot.title = element_text(hjust = 0.5),text = element_text(size = 20),axis.text = element_text(size = 18))
