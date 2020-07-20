@@ -117,7 +117,7 @@ cleanUndergrad1 <- function(dat) {
   
   unique(dat$Undergraduate.Major) #64
   
-  dat$Undergraduate.Major <- ifelse(dat$Undergraduate.Major %in% c("Physics/Maths","Aerospace","Engineering","NoUndergradDeg","Sciences","Military Bachelors"), dat$Undergraduate.Major, "Other")
+  dat$Undergraduate.Major <- ifelse(dat$Undergraduate.Major %in% c("Physics/Maths","Aerospace","Engineering","NoUndergradDeg","Sciences"), dat$Undergraduate.Major, "Other")
   unique(dat$Undergraduate.Major) #7
   return(dat)
 }
@@ -240,7 +240,8 @@ groups=data.frame(table(dat$Undergraduate.Orig,dat$Undergraduate.Major))
 groups <- groups[groups$Freq!=0,]
 ggplot(groups, aes(fill=Var1, y=Freq, x=Var2)) + 
   geom_bar(position="stack",stat="identity")+
-  theme(legend.position = "none")
+  theme(legend.position = "none")+
+  scale_color_brewer(palette="Set3")
 
 #### SANKEY PLOT ####
 # Generate Node Names df
@@ -588,7 +589,7 @@ sankPost1978 <- sankeyPrep4(datPost1978)
 
 sank$links <- sank$links[sank$links$values>4,] # remove links with value less than this amount to clean up plot
 sank$links$linkgroup <- rep("notpath",nrow(sank$links))
-sank$links[c(3,7,13,19),]$linkgroup <- "path" # manually set desired path to be highlighted
+sank$links[c(3,7,13,18),]$linkgroup <- "path" # manually set desired path to be highlighted
 my_color <- 'd3.scaleOrdinal() .domain(["path", "notpath","Male","Female","USBorn","BornAbroad"]) 
     .range(["#FB8072", "#C3C2C4","#D95F02", "#1B9E77", "#B3DE69", "#FCCDE5", "#D9D9D9", "#BC80BD", "#CCEBC5", "#FFED6F","#7570B3" ,"#E7298A", "#66A61E", "#E6AB02", "#A6761D" ,"#666666"])'
 
