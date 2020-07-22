@@ -2,6 +2,9 @@
 .Rhistory
 .Rapp.history
 
+# Presentation documents
+/Presentation/
+
 # Session Data files
 .RData
 

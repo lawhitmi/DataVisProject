@@ -47,7 +47,7 @@ In order to visualize the 'path' to becoming an Astronaut, multiple categories a
 The dataset contains background information on 357 Astronauts from 1959 through 2013. Below is a subset of the dataset with just the relevant columns selected. The variables of interest in determining the path are `Gender`, `Undergraduate.Major`, `Graduate.Major`, `Birth.Place`, and `Military.Branch`. `Gender` has two levels and no missing values so no further data preparation will be required for this variable. The other variables are addressed in the subsequent sections.
 
 ```{r fig.height=1}
-knitr::kable(head(dat[,c('Name','Birth.Place','Gender','Undergraduate.Major','Graduate.Major','Military.Branch')],n=8))
+knitr::kable(head(dat[,c('Name','Birth.Place','Gender','Undergraduate.Major','Graduate.Major','Military.Branch')],n=8),caption="Subset of Astronaut Dataset", booktabs=TRUE, linesep="")
 ```  
   
 ### *Birth Place*
@@ -82,12 +82,13 @@ dat <- cleanBirth(dat)
 The `Undergraduate.Major` variable contains some missing data. A further look into this missing data (using Wikipedia) revealed that the majority of missing Bachelor's Degrees were for Astronauts that had attended Military Academies. These Academies did not provide named Bachelor's degrees in the earlier years which is the reason the fields were blank. To distinguish these missing values from 'real' missing values, they were populated with the degree "Military Bachelors". Interestingly, there is 1 Astronaut with no official Bachelor's Degree.  Thomas J. Hennen only attended 2 years of University before joining the military and never earned a degree.
 
 
-Both `Undergraduate.Major` and `Graduate.Major` each have far too many unique values to be displayed in a meaningful way. The top 10 most frequent degrees for both Undergrad and Graduate levels are shown below. First, degrees containing the terms "Physics" or "Math" were binned into one category `Physics/Maths`. Because Aerospace was such a large portion of both the Undergraduate and Graduate degrees, it was kept separate from the other engineering degrees. Aerospace is also an broad field which encompasses Aeronautics (within atmosphere) and Astronautics (in space) so degrees containing these words were binned together with Aerospace. The new `Sciences` category is probably the broadest as it contains all degrees which contained the word "science" or one of the common suffixes for a field of study (i.e. '-ology','-onomy','-graphy', etc.). The `Engineering` bin contains all degrees with 'engineer' in the name with the exception of those Aerospace/Aeronautical Engineering degrees which were previously binned into the `Aerospace` category. Degrees that did not fall into one of these categories were classified as `Other`. Because of the high number of Medical degrees in the Graduate Majors, it was given its own category.  All other groupings are the same as the Undergraduate Majors.
+Both `Undergraduate.Major` and `Graduate.Major` each have far too many unique values to be displayed in a meaningful way. The top 10 most frequent degrees for both Undergrad and Graduate levels are shown below in Tables &nbsp;\@ref(tab:undmajor) and &nbsp;\@ref(tab:gradmajor) . These more common majors were used to determine the new categories. First, degrees containing the terms "Physics" or "Math" were binned into one category `Physics/Maths`. Because Aerospace and Aeronautical Engineering were such a large portion of both the Undergraduate and Graduate degrees, they were kept separate from the other engineering degrees. Aerospace is also an broad field which encompasses Aeronautics (within atmosphere) and Astronautics (in space) so degrees containing these words were binned together with Aerospace. The new `Sciences` category is the broadest as it contains all degrees which contained the word "science" or one of the common suffixes for a field of study (i.e. '-ology','-onomy','-graphy', etc.). The `Engineering` bin contains all degrees with 'engineer' in the name with the exception of those Aerospace/Aeronautical Engineering degrees which were previously binned into the `Aerospace` category. Degrees that did not fall into one of these categories were classified as `Other`. Because of the high number of Medical degrees in the Graduate Majors, it was given its own category.  All other groupings are the same as the Undergraduate Majors.
 
-```{r fig.height=0.5, fig.width=3}
-knitr::kable(sort(table(dat$Undergraduate.Major),decreasing=TRUE)[1:10],col.names=c("Undergraduate.Major","Count"))
-knitr::kable(sort(table(dat$Graduate.Major),decreasing=TRUE)[1:10],col.names=c("Graduate.Major","Count"))
-
+```{r undmajor}
+knitr::kable(sort(table(dat$Undergraduate.Major),decreasing=TRUE)[1:10],col.names=c("Undergraduate.Major","Count"),caption="Most Frequent Undergraduate Majors", booktabs=TRUE, linesep="")
+```
+```{r gradmajor}
+knitr::kable(sort(table(dat$Graduate.Major),decreasing=TRUE)[1:10],col.names=c("Graduate.Major","Count"),caption="Most Frequent Graduate Majors", booktabs=TRUE, linesep="")
 ```
 ```{r}
 # Cleansing Undergrad Majors
@@ -168,10 +169,10 @@ dat <- cleanGrad(cleanUndergrad(dat))
 ```
   
 ### *Military Branch*
-The unique values for the `Military.Branch` variable can be seen below.  Since we're not particularly concerned with whether or not the Astronaut is "retired" or in the Reserves, this part of the string was removed. An initial attempt was made to generate the sankey plot using all the branches of the military as categories, but this yielded a plot that would have confused the viewer. This plot made it appear that the majority of Astronauts had not joined the military, which was not the case. An additional attempt which added another layer after `Military` with a breakout of each of the military branches also made the sankey plot much harder to understand and was abandoned. In determining the 'path' it was determined that the question to be answered for this variable would be "Should I join the military or not?" rather than determining which branch to join. For this reason, the variable was binned into `Military` and `Civilian`.
+The unique values for the `Military.Branch` variable can be seen in Table &nbsp;\@ref(tab:milbranch) below.  Since it is not important whether or not the Astronaut is "retired" or in the Reserves, this part of the string was removed. An initial attempt was made to generate the sankey plot using all the branches of the military as categories, but this yielded a plot that would have confused the viewer. This plot made it appear that the majority of Astronauts had not joined the military, which was not the case. An additional attempt which added another layer after `Military` with a breakout of each of the military branches also made the sankey plot much harder to understand and was abandoned. In determining the 'path' it was determined that the question to be answered for this variable would be "Should I join the military or not?" rather than determining which branch to join. For this reason, the variable was binned into `Military` and `Civilian`.
 
-```{r}
-knitr::kable(levels(dat$Military.Branch),col.names = "Military.Branch")
+```{r milbranch}
+knitr::kable(levels(dat$Military.Branch),col.names = "Military.Branch",caption="Unique Labels in Military.Branch", booktabs=TRUE, linesep="")
 ```
 ```{r}
 # Cleansing the Military Branch
@@ -256,8 +257,11 @@ sank <- sankeyPrep(dat)
 
 ```
 ```{r}
-knitr::kable(head(sank$nodes[c("nodes","index")],n=5))
-knitr::kable(head(sank$links[c("source","sourcename","target","targetname","values")],n=5))
+knitr::kable(head(sank$nodes[c("nodes","index")],n=5),caption="'Nodes' Dataframe", booktabs=TRUE, linesep="")
+
+```
+```{r}
+knitr::kable(head(sank$links[c("source","target","values")],n=5),caption="'Links' Dataframe", booktabs=TRUE, linesep="")
 ```
 ## Sankey Plot Visualization Aspects
 ### *Colors*
@@ -272,7 +276,9 @@ The height of the node rectangles show the relative sizes of the categories for 
 The `sankeyNetwork` function does not provide much control over the placement of the categories for each variable. There is an `iterations` argument to the function that is meant to set the number of calculations of the diagram layout. The results even at high numbers of iterations were not particularly impressive. The package provides the ability to move the nodes in the y-axis manually after the plot is generated. Two improvements were made in this way. The first was to align the matching degrees in the Undergraduate and Graduate degree variables. This 'straightens' the selected path, and also decreases some of the congestion in the plot by reducing the overlapping of the wider paths. Second, the algorithm does not properly draw the link between the `USBorn` and `Military` categories so this is remedied by moving both the `Civilian` and `Military` categories up slightly. Note that the `sankeyNetwork` command also does not provide a way to specify the horizontal distance between nodes. Its possible this can be accomplished utilizing javascript, but it would require manually editting the positions of the nodes and their associated links in the HTML. This was not performed for this graphic.
 
 ### *Further Improvement Steps*
-One strange aspect of the `sankeyNetwork` function is that it draws connections between nodes even if the 'value' of that link is 0. To remove these connections, as well as remove other relatively small connections, links with values below 4 were removed from the dataframe before plotting. It was recognized that removing some of these smaller links could lead to misrepresentations of the data. For instance, in the final sankey plot (Figure&nbsp;\@ref(fig:sankey)), it appears that there are no female astronauts who were born abroad when in fact there were two. Ultimately, the clarity of the sankey plot was determined to be more important, and the filter for small link values was retained for the final plot. 
+One strange aspect of the `sankeyNetwork` function is that it draws connections between nodes even if the 'value' of that link is 0. To remove these connections, as well as remove other relatively small connections, links with values below 4 were removed from the dataframe before plotting. It was recognized that removing some of these smaller links could lead to misrepresentations of the data. For instance, in the final sankey plot (Figure&nbsp;\@ref(fig:sankey)), it appears that there are no female astronauts who were born abroad when in fact there were two. Ultimately, the clarity of the sankey plot was determined to be more important, and the filter for small link values was retained for the final plot.  
+  
+The graphic could also have benefited from headings on each of the variables, but this proved too difficult with my limited HTML/javascript knowledge and will be left as a future improvement to the plot.
 ```{r}
 sank$links <- sank$links[sank$links$values>4,] # remove links with value less than this amount to clean up plot
 sank$links$linkgroup <- rep("notpath",nrow(sank$links))
@@ -311,5 +317,6 @@ There are some disadvantages to this implementation of the Sankey Plot. First, e
 
 
 # References{-}
-Wikipedia contributors. (2020, April 16). Thomas J. Hennen. In Wikipedia, The Free Encyclopedia. Retrieved 06:55, July 19, 2020, from https://en.wikipedia.org/w/index.php?title=Thomas_J._Hennen&oldid=951313024
+* Wikipedia contributors. (2020, April 16). Thomas J. Hennen. In Wikipedia, The Free Encyclopedia. Retrieved 06:55, July 19, 2020, from https://en.wikipedia.org/w/index.php?title=Thomas_J._Hennen&oldid=951313024  
+* NASA Astronauts Dataset, 1959-Present. https://www.kaggle.com/nasa/astronaut-yearbook
 
